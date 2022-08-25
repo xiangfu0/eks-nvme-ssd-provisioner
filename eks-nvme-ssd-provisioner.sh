@@ -34,11 +34,12 @@ then
     DEVICE=$RAID_DEVICE
     ;;
   esac
-  UUID=$(blkid -s UUID -o value "$DEVICE")
+  UUID=$(lsblk -no UUID "$DEVICE")
   if mount | grep "$DEVICE" > /dev/null; then
     echo "device $DEVICE appears to be mounted already"
   else
-    mount -o defaults,noatime,discard,nobarrier --uuid "$UUID" "/pv-disks/$UUID"
+    mkdir -p "/pv-disks/$UUID"
+    mount -t ext4 UUID="$UUID" "/pv-disks/$UUID"
   fi
   ln -s "/pv-disks/$UUID" /nvme/disk || true
   echo "Device $DEVICE has been mounted to /pv-disks/$UUID"
@@ -69,9 +70,10 @@ case $SSD_NVME_DEVICE_COUNT in
   ;;
 esac
 
-UUID=$(blkid -s UUID -o value "$DEVICE")
+UUID=$(lsblk -no UUID "$DEVICE")
 mkdir -p "/pv-disks/$UUID"
-mount -o defaults,noatime,discard,nobarrier --uuid "$UUID" "/pv-disks/$UUID"
+mount -t ext4 UUID="$UUID" "/pv-disks/$UUID"
+rm /nvme/disk
 ln -s "/pv-disks/$UUID" /nvme/disk
 echo "Device $DEVICE has been mounted to /pv-disks/$UUID"
 echo "NVMe SSD provisioning is done and I will go to sleep now"
